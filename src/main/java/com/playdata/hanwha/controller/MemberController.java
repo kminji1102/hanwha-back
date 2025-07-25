@@ -1,9 +1,9 @@
 package com.playdata.hanwha.controller;
 
 import com.playdata.hanwha.dto.LoginRequest;
-import com.playdata.hanwha.dto.LoginResponse;
 import com.playdata.hanwha.entity.Member;
 import com.playdata.hanwha.repository.MemberRepository;
+import com.playdata.hanwha.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,18 +55,29 @@ public class MemberController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest loginRequest) {
+    public Map<String, Object> login(@RequestBody LoginRequest loginRequest) {
+        Map<String, Object> response = new HashMap<>();
+
         Member member = memberRepository.findByNickname(loginRequest.getNickname())
                 .orElse(null);
 
         if (member == null) {
-            return new LoginResponse(false, "존재하지 않는 사용자입니다.");
+            response.put("success", false);
+            response.put("message", "존재하지 않는 사용자입니다.");
+            return response;
         }
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), member.getPassword())) {
-            return new LoginResponse(false, "비밀번호가 일치하지 않습니다.");
+            response.put("success", false);
+            response.put("message", "비밀번호가 일치하지 않습니다.");
         }
 
-        return new LoginResponse(true, "로그인 성공!");
+        // JWT 토큰 발급
+        String token = JwtUtil.generateToken(member.getNickname());
+        response.put("success", true);
+        response.put("token", token);
+        response.put("message", "로그인 성공!");
+
+        return response;
     }
 }
