@@ -21,7 +21,7 @@ public class StudentController {
     }
 
     // 훈련생 생성
-    @PostMapping("/join")
+    @PostMapping("/create")
     public Student createBoard(@RequestBody Student student) {
         return studentRepository.save(student);
     }
